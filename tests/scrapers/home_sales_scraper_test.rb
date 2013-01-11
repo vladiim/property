@@ -10,7 +10,7 @@ describe HomeSalesScraper do
       FakeWeb.register_uri(:get, HomeSalesScraper.create_query_url(200000, 500000, 'New South Wales'),
                          body: @stream, content_type: 'text/html')
       @scraper = HomeSalesScraper.new(200000, 500000, 'New South Wales')
-      @scraper.set_first_result
+      @scraper.result = @scraper.results.first
     end
 
     after { @stream.close }

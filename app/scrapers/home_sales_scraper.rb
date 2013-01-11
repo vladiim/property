@@ -7,11 +7,12 @@ class HomeSalesScraper
             'Northern Territory', 'Queensland', 'South Australia',
             'Tasmania', 'Victoria', 'Western Australia']
 
-  attr_accessor :agent, :results, :result, :house
+  attr_accessor :agent, :results, :result, :house, :url
 
   def initialize(price_min, price_max, state)
   	@agent = Mechanize.new
-  	@agent.get HomeSalesScraper.create_query_url(price_min, price_max, state)
+    @url = HomeSalesScraper.create_query_url(price_min, price_max, state)
+  	@agent.get @url
     get_results
   end
 
@@ -20,8 +21,8 @@ class HomeSalesScraper
   end
 
   def create_house
-    return 'All New Listings Found' if House.find_by_address(get_address)
-    @house                = House.new
+    return if House.find_by_address(get_address)
+    @house                = House.find_or_initialize_by_address(get_address)
     @house.address        = get_address
     @house.price          = get_price
     @house.postcode       = get_postcode
@@ -34,23 +35,32 @@ class HomeSalesScraper
   end
 
   def self.create_query_url(price_min, price_max, location)
-    URL + "/invest/?" + URI.encode_www_form(investorPropertyTypes: 'All', investorPriceMin: price_min, 
+    URL + "/invest/?" + URI.encode_www_form(investorPropertyTypes: 'All%2c0%2c2%2c1%2c5', investorPriceMin: price_min, 
                              investorPriceMax: price_max, investorCashflow: 'Positive',
-                             location: location)
+                             location: location) + '%2c+State'
   end
 
   def next_page
-    node = @agent.page.search('div.pagination ul ul li.next a')
+    return unless next_link?
+    node = find_next_link_node
     link = node[0].attributes
     Mechanize::Page::Link.new(link, @agent, @agent.page).click
   end
 
+  def next_link?
+    true unless find_next_link_node.empty?
+  end
+
   private
+
+  def find_next_link_node
+    @agent.page.search('div.pagination ul ul li.next a')
+  end
 
   def get_price
     result = @result.search('div.primary-price p').text
     result = result.scan(/\d/)
-    result.join.to_i
+    result[0...6].join.to_i # the [0...6] is to avoid ranges
   end
 
   def get_address
