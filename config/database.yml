@@ -1,0 +1,15 @@
+development:
+  adapter: postgresql
+  encoding: utf8
+  database: property_development
+  pool: 5
+  username: vladiim
+  password:
+
+test:
+  adapter: postgresql
+  encoding: utf8
+  database: property_test
+  pool: 5
+  username: vladiim
+  password:
