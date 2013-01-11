@@ -7,9 +7,9 @@ describe HomeSalesScraper do
   describe '#initialize' do
     before do
       @stream = File.open "#{scraper_fixtures_dir}/home_sales_fixture.html", 'r'
-      FakeWeb.register_uri(:get, HomeSalesScraper.results_url,
+      FakeWeb.register_uri(:get, HomeSalesScraper.create_query_url(200000, 500000, 'New South Wales'),
                          body: @stream, content_type: 'text/html')
-      @scraper = HomeSalesScraper.new
+      @scraper = HomeSalesScraper.new(200000, 500000, 'New South Wales')
       @scraper.set_first_result
     end
 
@@ -28,7 +28,7 @@ describe HomeSalesScraper do
           assert_instance_of House, @scraper.house
         end
 
-        it 'sets the houses properties' do
+        it 'formats and sets the houses properties' do
           assert_equal result_mock[:address],        @scraper.house.address
           assert_equal result_mock[:price],          @scraper.house.price
           assert_equal result_mock[:postcode],       @scraper.house.postcode

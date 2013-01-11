@@ -9,9 +9,9 @@ class HomeSalesScraper
 
   attr_accessor :agent, :results, :result, :house
 
-  def initialize
+  def initialize(price_min, price_max, state)
   	@agent = Mechanize.new
-  	@agent.get HomeSalesScraper.results_url
+  	@agent.get HomeSalesScraper.create_query_url(price_min, price_max, state)
     get_results
   end
 
@@ -33,18 +33,16 @@ class HomeSalesScraper
     @house.save
   end
 
-  def set_first_result
-  	@result = @results.first
-  end
-
   def self.create_query_url(price_min, price_max, location)
     URL + "/invest/?" + URI.encode_www_form(investorPropertyTypes: 'All', investorPriceMin: price_min, 
                              investorPriceMax: price_max, investorCashflow: 'Positive',
                              location: location)
   end
 
-  def self.results_url
-    URL + '/invest/?investorPropertyTypes=All%2c0%2c2%2c1%2c5&investorPriceMin=200000&investorPriceMax=500000&investorCashflow=Positive&location=New+South+Wales%2c+State'
+  def next_page
+    node = @agent.page.search('div.pagination ul ul li.next a')
+    link = node[0].attributes
+    Mechanize::Page::Link.new(link, @agent, @agent.page).click
   end
 
   private
